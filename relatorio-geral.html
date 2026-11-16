@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SantoryTec - Check-list Geral & Ordem de Serviço</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        santory: {
+                            blue: '#0F4C81',
+                            darkblue: '#0B365B',
+                            teal: '#00A896',
+                            lightteal: '#E6F4F1',
+                            bg: '#F8FAFC',
+                            card: '#FFFFFF',
+                            border: '#CBD5E1',
+                            accent: '#0284C7'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F1F5F9;
+            color: #1E293B;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        /* Container que simula a página A4 no browser */
+        .a4-page {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 10mm 12mm 8mm 12mm;
+            margin: 20px auto;
+            background: #ffffff;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Ajustes finos para Inputs e Selects integrados ao documento */
+        input, select, textarea {
+            transition: all 0.15s ease-in-out;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 168, 150, 0.2);
+        }
+
+        /* Regras Estritas de Impressão A4 */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
+            html, body {
+                background: #ffffff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 210mm;
+                height: 297mm;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .a4-page {
+                width: 210mm !important;
+                height: 297mm !important;
+                max-height: 297mm !important;
+                margin: 0 !important;
+                padding: 8mm 10mm 6mm 10mm !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                border: none !important;
+                page-break-after: avoid;
+                page-break-inside: avoid;
+            }
+            input, select, textarea {
+                border-color: #CBD5E1 !important;
+                background-color: transparent !important;
+                appearance: none !important;
+                -webkit-appearance: none !important;
+                resize: none !important;
+                box-shadow: none !important;
+                padding-top: 1px !important;
+                padding-bottom: 1px !important;
+            }
+            input::placeholder, textarea::placeholder {
+                color: transparent !important;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F1F5F9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94A3B8;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="py-4 min-h-screen flex flex-col justify-between">
+
+    <!-- Barra Superior de Ações (Ocultada na Impressão) -->
+    <div class="no-print fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm py-2.5 px-6">
+        <div class="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-santory-teal animate-pulse"></span>
+                <span class="font-bold text-santory-darkblue text-sm uppercase tracking-wide">SantoryTec Checklist Geral</span>
+                <span class="text-[10px] bg-santory-lightteal text-santory-blue px-2 py-0.5 rounded font-mono font-bold">Pro Edition</span>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <button type="button" onclick="resetForm()" class="px-3.5 py-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition-all flex items-center gap-1.5 shadow-xs">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    Limpar
+                </button>
+
+                <button type="button" onclick="prepareAndPrint()" class="px-4 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-santory-blue to-santory-teal hover:from-santory-darkblue hover:to-santory-blue rounded-lg shadow-sm hover:shadow-md transition-all flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                    Imprimir / Salvar PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Espaçador para compensar a barra superior -->
+    <div class="no-print h-10"></div>
+
+    <!-- FOLHA A4 -->
+    <main class="a4-page" id="form-container">
+        <form id="osGeralForm" class="h-full flex flex-col justify-between space-y-2">
+
+            <div>
+                <!-- CABEÇALHO SANTORYTEC -->
+                <header class="flex items-center justify-between border-b-2 border-santory-blue pb-2 mb-2">
+                    <div class="flex items-center gap-2.5"><img src="santory-logo.png" alt="Santory Tec" style="width:145px;height:70px;object-fit:contain"></div><div class="text-right">
+                        <span class="inline-block bg-santory-lightteal text-santory-blue border border-santory-teal/30 text-[9px] font-extrabold tracking-widest uppercase px-2.5 py-0.5 rounded-full mb-0.5">
+                            Ordem de Serviço & Checklist
+                        </span>
+                        <h1 class="text-[10px] font-bold text-slate-700 tracking-wide uppercase">Manutenção Completa de Hardware e Software</h1>
+                    </div>
+                </header>
+
+                <!-- CONTEÚDO DIVIDIDO EM SEÇÕES OTIMIZADAS PARA O A4 -->
+                <div class="space-y-2">
+
+                    <!-- 1. IDENTIFICAÇÃO DO CLIENTE E DO COMPUTADOR -->
+                    <section class="border border-slate-200 rounded p-2 bg-white">
+                        <div class="flex items-center gap-1.5 mb-1.5 pb-0.5 border-b border-slate-100">
+                            <span class="w-1.5 h-1.5 rounded-full bg-santory-teal"></span>
+                            <h2 class="text-[10px] font-bold uppercase tracking-wider text-santory-darkblue">1. Identificação do Cliente e do Computador</h2>
+                        </div>
+                        <div class="grid grid-cols-12 gap-2 text-[11px]">
+                            <div class="col-span-7">
+                                <label class="block text-[9px] font-bold text-slate-500 uppercase">Nome do Cliente</label>
+                                <input type="text" name="cliente_nome" class="w-full px-2 py-0.5 border border-slate-300 rounded font-medium text-slate-800" placeholder="Nome completo">
+                            </div>
+                            <div class="col-span-3">
+                                <label class="block text-[9px] font-bold text-slate-500 uppercase">Telefone / WhatsApp</label>
+                                <input type="text" name="cliente_fone" class="w-full px-2 py-0.5 border border-slate-300 rounded font-medium text-slate-800" placeholder="(00) 00000-0000">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-[9px] font-bold text-slate-500 uppercase">Data Entrada</label>
+                                <input type="date" name="data_entrada" class="w-full px-1.5 py-0.5 border border-slate-300 rounded font-medium text-slate-800">
+                            </div>
+
+                            <div class="col-span-8">
+                                <label class="block text-[9px] font-bold text-slate-500 uppercase">Equipamento / Modelo / Marca</label>
+                                <input type="text" name="eq_modelo" class="w-full px-2 py-0.5 border border-slate-300 rounded font-medium text-slate-800" placeholder="Ex: Notebook Dell Vostro 3510 / Gabinete Gamer Corsair">
+                            </div>
+                            <div class="col-span-4">
+                                <label class="block text-[9px] font-bold text-slate-500 uppercase">Número de Série / Tag (SN)</label>
+                                <input type="text" name="eq_serial" class="w-full px-2 py-0.5 border border-slate-300 rounded font-medium text-slate-800" placeholder="Ex: CN-0X892K-74261">
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 2. ESTADO FÍSICO DE ENTRADA & ACESSÓRIOS -->
+                    <section class="border border-slate-200 rounded p-2 bg-white">
+                        <div class="flex items-center gap-1.5 mb-1.5 pb-0.5 border-b border-slate-100">
+                            <span class="w-1.5 h-1.5 rounded-full bg-santory-teal"></span>
+                            <h2 class="text-[10px] font-bold uppercase tracking-wider text-santory-darkblue">2. Estado Físico de Entrada & Acessórios</h2>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 text-[10px]">
+                            <div>
+                                <label class="block font-bold text-slate-500 uppercase mb-0.5">Estado da Carcaça / Gabinete</label>
+                                <input type="text" name="fisico_carcaca" class="w-full px-2 py-0.5 border border-slate-300 rounded text-slate-800" placeholder="Ex: Riscos na tampa, sem trincas">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-500 uppercase mb-0.5">Portas e Conectores</label>
+                                <input type="text" name="fisico_portas" class="w-full px-2 py-0.5 border border-slate-300 rounded text-slate-800" placeholder="Ex: USBs OK, P2 com mau contato">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-500 uppercase mb-0.5">Acessórios Deixados</label>
+                                <input type="text" name="fisico_acessorios" class="w-full px-2 py-0.5 border border-slate-300 rounded text-slate-800" placeholder="Ex: Fonte/Carregador original + Cabo">
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 3. CHECKLIST DE HARDWARE & COMPONENTES -->
+                    <section class="border border-slate-200 rounded p-2 bg-white">
+                        <div class="flex items-center gap-1.5 mb-1.5 pb-0.5 border-b border-slate-100">
+                            <span class="w-1.5 h-1.5 rounded-full bg-santory-teal"></span>
+                            <h2 class="text-[10px] font-bold uppercase tracking-wider text-santory-darkblue">3. Especificações e Diagnóstico de Hardware</h2>
+                        </div>
+                        <div class="grid grid-cols-12 gap-2 text-[10px]">
+                            <!-- CPU -->
+                            <div class="col-span-7">
+                                <label class="block font-bold text-slate-500 uppercase">Processador (CPU)</label>
+                                <input type="text" name="hw_cpu" class="w-full px-2 py-0.5 border border-slate-300 rounded text-slate-800" placeholder="Ex: Intel Core i5-1135G7 @ 2.40GHz">
+                            </div>
+                            <div class="col-span-5">
+                                <label class="block font-bold text-slate-500 uppercase">Temperatura CPU (Idle/Estresse)</label>
+                                <input type="text" name="hw_cpu_temp" class="w-full px-2 py-0.5 border border-slate-300 rounded text-slate-800" placeholder="Ex: 42°C / 78°C">
+                            </div>
+
+                            <!-- RAM -->
+                            <div class="col-span-7">
+                                <label class="block font-bold text-slate-500 uppercase">Memória RAM (Capacidade / Frequência)</label>
+                                <input type="text" name="hw_ram" class="w-full px-2 py-0.5 border border-slate-300 rounded text-slate-800" placeholder="Ex: 16 GB DDR4 3200MHz (2x8GB)">
+                            </div>
+                            <div class="col-span-5">
+                                <label class="block font-bold text-slate-500 uppercase">Pentes / Integridade RAM</label>
+                                <input type="text" name="hw_ram_status" class="w-full px-2 py-0.5 border border-slate-300 rounded text-slate-800" placeholder="Ex: MemTest86 Aprovado (0 Erros)">
+                            </div>
+
+                            <!-- ARMAZENAMENTO -->
+                            <div class="col-span-7">
+                                <label class="block font-bold text-slate-500 uppercase">Armazenamento (Tipo / Modelo / Cap.)</label>
+                                <input type="text" name="hw_disk" class="w-full px-2 py-0.5 border border-slate-300 rounded text-slate-800" placeholder="Ex: SSD NVMe KingSpec 512GB">
+                            </div>
+                            <div class="col-span-5">
+                                <label class="block font-bold text-slate-500 uppercase">Saúde S.M.A.R.T.</label>
+                                <select name="hw_disk_smart" class="w-full px-2 py-0.5 border border-slate-300 rounded text-slate-800 bg-white">
+                                    <option value="">Selecione...</option>
+                                    <option value="Saudável (100%)">Saudável (100%)</option>
+                                    <option value="Alerta (Setores Rebanheados)">Alerta (Atenção)</option>
+                                    <option value="Crítico (Substituição Imediata)">Crítico (Falha iminente)</option>
+                                </select>
+                            </div>
+
+                            <!-- GPU e FONTE -->
+                            <div class="col-span-6">
+                                <label class="block font-bold text-slate-500 uppercase">Placa de Vídeo (GPU)</label>
+                                <input type="text" name="hw_gpu" class="w-full px-2 py-0.5 border border-slate-300 rounded text-slate-800" placeholder="Ex: NVIDIA RTX 3060 12GB / Integrada">
+                            </div>
+                            <div class="col-span-6">
+                                <label class="block font-bold text-slate-500 uppercase">Fonte de Alimentação / Tensões</label>
+                                <input type="text" name="hw_fonte" class="w-full px-2 py-0.5 border border-slate-300 rounded text-slate-800" placeholder="Ex: Corsair 650W 80 Plus - Tensões OK">
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 4. DIAGNÓSTICO FÍSICO & MANUTENÇÃO PREVENTIVA -->
+                    <section class="border border-slate-200 rounded p-2 bg-white">
+                        <div class="flex items-center gap-1.5 mb-1.5 pb-0.5 border-b border-slate-100">
+                            <span class="w-1.5 h-1.5 rounded-full bg-santory-teal"></span>
+                            <h2 class="text-[10px] font-bold uppercase tracking-wider text-santory-darkblue">4. Limpeza Interna & Manutenção Física</h2>
+                        </div>
+                        <div class="grid grid-cols-4 gap-2 text-[10px]">
+                            <div>
+                                <label class="block font-bold text-slate-500 uppercase mb-0.5">Limpeza Interna</label>
+                                <select name="manut_limpeza" class="w-full px-2 py-0.5 border border-slate-300 rounded text-slate-800 bg-white">
+                                    <option value="">Selecione...</option>
+                                    <option value="Realizada (Poeira Removida)">Realizada</option>
+                                    <option value="Não Necessária">Não Necessária</option>
+                                    <option value="Pendente">Pendente</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-500 uppercase mb-0.5">Troca de Pasta Térmica</label>
+                                <select name="manut_pasta" class="w-full px-2 py-0.5 border border-slate-300 rounded text-slate-800 bg-white">
+                                    <option value="">Selecione...</option>
+                                    <option value="Aplicada Pasta de Prata/Cd">Aplicada (Alta Cond.)</option>
+                                    <option value="Não Aplicada">Não Aplicada</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-500 uppercase mb-0.5">Coolers / Fans</label>
+                                <input type="text" name="manut_fans" class="w-full px-2 py-0.5 border border-slate-300 rounded text-slate-800" placeholder="Ex: OK / Lubrificado">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-500 uppercase mb-0.5">Placa-Mãe / Capacitores</label>
+                                <input type="text" name="manut_mobo" class="w-full px-2 py-0.5 border border-slate-300 rounded text-slate-800" placeholder="Ex: Sem oxidação/estufamento">
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 5. SOFTWARE, BIOS & CONECTIVIDADE -->
+                    <section class="border border-slate-200 rounded p-2 bg-white">
+                        <div class="flex items-center gap-1.5 mb-1.5 pb-0.5 border-b border-slate-100">
+                            <span class="w-1.5 h-1.5 rounded-full bg-santory-teal"></span>
+                            <h2 class="text-[10px] font-bold uppercase tracking-wider text-santory-darkblue">5. Software, BIOS & Conectividade</h2>
+                        </div>
+                        <div class="grid grid-cols-12 gap-2 text-[10px]">
+                            <div class="col-span-4">
+                                <label class="block font-bold text-slate-500 uppercase">Versão da BIOS</label>
+                                <input type="text" name="sw_bios" class="w-full px-2 py-0.5 border border-slate-300 rounded text-slate-800" placeholder="Ex: v1.24 (Atualizada)">
+                            </div>
+                            <div class="col-span-8">
+                                <label class="block font-bold text-slate-500 uppercase">Conectividade (Wi-Fi, Bluetooth, Ethernet)</label>
+                                <input type="text" name="sw_rede" class="w-full px-2 py-0.5 border border-slate-300 rounded text-slate-800" placeholder="Ex: Wi-Fi 6 OK / Bluetooth OK / Lan Gigabit OK">
+                            </div>
+
+                            <div class="col-span-4">
+                                <label class="block font-bold text-slate-500 uppercase">Sistema Operacional</label>
+                                <input type="text" name="sw_so" class="w-full px-2 py-0.5 border border-slate-300 rounded text-slate-800" placeholder="Ex: Windows 11 Pro 64-bit">
+                            </div>
+                            <div class="col-span-4">
+                                <label class="block font-bold text-slate-500 uppercase">Status de Ativação do S.O.</label>
+                                <select name="sw_so_ativacao" class="w-full px-2 py-0.5 border border-slate-300 rounded text-slate-800 bg-white">
+                                    <option value="">Selecione...</option>
+                                    <option value="Ativado (Licença Digital)">Ativado (Licença Digital)</option>
+                                    <option value="Não Ativado">Não Ativado</option>
+                                    <option value="Chave Fornecida pelo Cliente">Chave do Cliente</option>
+                                </select>
+                            </div>
+                            <div class="col-span-4">
+                                <label class="block font-bold text-slate-500 uppercase">Microsoft 365 / Office</label>
+                                <select name="sw_office" class="w-full px-2 py-0.5 border border-slate-300 rounded text-slate-800 bg-white">
+                                    <option value="">Selecione...</option>
+                                    <option value="Instalado e Ativado">Instalado e Ativado</option>
+                                    <option value="Instalado sem Ativação">Instalado sem Ativação</option>
+                                    <option value="Não Instalado">Não Instalado</option>
+                                </select>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 6. TESTES FINAIS DE BANCADA & DESEMPENHO -->
+                    <section class="border border-slate-200 rounded p-2 bg-white">
+                        <div class="flex items-center gap-1.5 mb-1.5 pb-0.5 border-b border-slate-100">
+                            <span class="w-1.5 h-1.5 rounded-full bg-santory-teal"></span>
+                            <h2 class="text-[10px] font-bold uppercase tracking-wider text-santory-darkblue">6. Testes Finais de Bancada</h2>
+                        </div>
+                        <div class="grid grid-cols-5 gap-2 text-[10px]">
+                            <div>
+                                <label class="block font-bold text-slate-500 uppercase mb-0.5">Estresse / Estabilidade</label>
+                                <input type="text" name="teste_estresse" class="w-full px-2 py-0.5 border border-slate-300 rounded text-slate-800" placeholder="Ex: AIDA64 30min OK">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-500 uppercase mb-0.5">Áudio / Som</label>
+                                <input type="text" name="teste_audio" class="w-full px-2 py-0.5 border border-slate-300 rounded text-slate-800" placeholder="Ex: Caixas/P2 OK">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-500 uppercase mb-0.5">Microfone / Cam</label>
+                                <input type="text" name="teste_media" class="w-full px-2 py-0.5 border border-slate-300 rounded text-slate-800" placeholder="Ex: WebCam & Mic OK">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-500 uppercase mb-0.5">Tempo de Boot</label>
+                                <input type="text" name="teste_boot" class="w-full px-2 py-0.5 border border-slate-300 rounded text-slate-800" placeholder="Ex: 12 segundos">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-500 uppercase mb-0.5">Bateria (se Note)</label>
+                                <input type="text" name="teste_bateria" class="w-full px-2 py-0.5 border border-slate-300 rounded text-slate-800" placeholder="Ex: Carregando 100%">
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 7. OBSERVAÇÕES TÉCNICAS & VALORES -->
+                    <section class="border border-slate-200 rounded p-2 bg-white">
+                        <div class="flex items-center gap-1.5 mb-1.5 pb-0.5 border-b border-slate-100">
+                            <span class="w-1.5 h-1.5 rounded-full bg-santory-teal"></span>
+                            <h2 class="text-[10px] font-bold uppercase tracking-wider text-santory-darkblue">7. Observações Técnicas, Serviços & Valores</h2>
+                        </div>
+                        <div class="grid grid-cols-12 gap-2 text-[10px]">
+                            <div class="col-span-8">
+                                <textarea name="obs_tecnicas" rows="2" class="w-full p-1.5 border border-slate-300 rounded text-slate-800 leading-tight" placeholder="Relatório final de serviços prestados, peças trocadas ou orientações ao cliente..."></textarea>
+                            </div>
+                            <div class="col-span-4 grid grid-cols-2 gap-1.5">
+                                <div class="col-span-2">
+                                    <label class="block font-bold text-slate-500 uppercase">Prazo de Garantia</label>
+                                    <input type="text" name="valor_garantia" class="w-full px-2 py-0.5 border border-slate-300 rounded text-slate-800 font-semibold" placeholder="Ex: 90 Dias (Hardware)">
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="block font-bold text-slate-500 uppercase">Valor Total (R$)</label>
+                                    <input type="text" name="valor_total" class="w-full px-2 py-0.5 border border-slate-300 rounded text-santory-darkblue font-extrabold text-xs" placeholder="R$ 0,00">
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                </div>
+            </div>
+
+            <!-- 8. ASSINATURAS E TERMOS DA SANTORYTEC -->
+            <div class="pt-2 border-t border-slate-200">
+                <div class="grid grid-cols-2 gap-6 mb-2">
+                    <!-- Técnico -->
+                    <div class="text-center">
+                        <div class="border-b border-slate-400 mb-0.5 pb-3">
+                            <input type="text" name="tecnico_assinatura" class="w-full text-center text-xs font-semibold text-slate-800 border-none bg-transparent p-0 focus:ring-0" placeholder="Nome / Assinatura do Técnico">
+                        </div>
+                        <p class="text-[9px] font-bold text-santory-darkblue uppercase tracking-wider">Técnico Responsável</p>
+                        <p class="text-[8px] text-slate-400">SantoryTec Suporte Técnico</p>
+                    </div>
+
+                    <!-- Cliente -->
+                    <div class="text-center">
+                        <div class="border-b border-slate-400 mb-0.5 pb-3">
+                            <span class="inline-block w-full text-center text-xs font-semibold text-slate-800">&nbsp;</span>
+                        </div>
+                        <p class="text-[9px] font-bold text-santory-darkblue uppercase tracking-wider">Assinatura do Cliente</p>
+                        <p class="text-[8px] text-slate-400">Declaro o recebimento do equipamento testado e em perfeito estado</p>
+                    </div>
+                </div>
+
+                <!-- Rodapé -->
+                <footer class="flex items-center justify-between text-[8px] text-slate-400 font-medium pt-1 border-t border-slate-100">
+                    <span>SantoryTec - Soluções em Tecnologia & Infraestrutura de TI</span>
+                    <span>Documento de Controle e Garantia - 1 Folha A4</span>
+                </footer>
+            </div>
+
+        </form>
+    </main>
+
+    <!-- LOGICA E ARMAZENAMENTO -->
+    <script>
+        const STORAGE_KEY = 'santorytec_os_geral_data';
+        const form = document.getElementById('osGeralForm');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSavedData();
+
+            // Data padrão de entrada
+            const dateInput = form.querySelector('input[name="data_entrada"]');
+            if (!dateInput.value) {
+                const today = new Date().toISOString().split('T')[0];
+                dateInput.value = today;
+            }
+
+            // Auto-salvar no LocalStorage
+            form.addEventListener('input', saveData);
+            form.addEventListener('change', saveData);
+        });
+
+        function saveData() {
+            const formData = new FormData(form);
+            const data = {};
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        function loadSavedData() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (!saved) return;
+
+            try {
+                const data = JSON.parse(saved);
+                Object.keys(data).forEach(key => {
+                    const elements = form.querySelectorAll(`[name="${key}"]`);
+                    elements.forEach(el => {
+                        if (el.type === 'radio') {
+                            if (el.value === data[key]) el.checked = true;
+                        } else {
+                            el.value = data[key];
+                        }
+                    });
+                });
+            } catch (e) {
+                console.error("Erro ao restaurar formulário", e);
+            }
+        }
+
+        function resetForm() {
+            if (confirm("Deseja realmente limpar todos os dados preenchidos desta ficha?")) {
+                form.reset();
+                localStorage.removeItem(STORAGE_KEY);
+                const dateInput = form.querySelector('input[name="data_entrada"]');
+                const today = new Date().toISOString().split('T')[0];
+                dateInput.value = today;
+            }
+        }
+
+        function prepareAndPrint() {
+            const originalValues = new Map();
+
+            // Substituir campos texto e textarea vazios por '-'
+            const textInputs = form.querySelectorAll('input[type="text"], input[type="email"], input[type="date"], textarea');
+            textInputs.forEach(input => {
+                originalValues.set(input, input.value);
+                if (!input.value.trim()) {
+                    input.value = '-';
+                }
+            });
+
+            // Substituir selects vazios por '-'
+            const selects = form.querySelectorAll('select');
+            selects.forEach(select => {
+                originalValues.set(select, select.value);
+                if (!select.value) {
+                    const tempOpt = document.createElement('option');
+                    tempOpt.value = '-';
+                    tempOpt.text = '-';
+                    tempOpt.dataset.temp = 'true';
+                    select.appendChild(tempOpt);
+                    select.value = '-';
+                }
+            });
+
+            // Abrir janela de impressão
+            window.print();
+
+            // Restaurar campos após impressão
+            setTimeout(() => {
+                textInputs.forEach(input => {
+                    if (originalValues.has(input)) {
+                        input.value = originalValues.get(input);
+                    }
+                });
+
+                selects.forEach(select => {
+                    const tempOpt = select.querySelector('option[data-temp="true"]');
+                    if (tempOpt) {
+                        tempOpt.remove();
+                    }
+                    if (originalValues.has(select)) {
+                        select.value = originalValues.get(select);
+                    }
+                });
+            }, 500);
+        }
+    </script>
+<script src="client-pull.js"></script></body>
+</html>

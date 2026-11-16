@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SantoryTec - Orçamento & Cortesias</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        santory: {
+                            blue: '#0F2A4A',
+                            darkblue: '#0B1F37',
+                            teal: '#00A88F',
+                            lightteal: '#E6F7F5',
+                            bg: '#F8FAFC',
+                            card: '#FFFFFF',
+                            border: '#CBD5E1',
+                            accent: '#0284C7'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F1F5F9;
+            color: #1E293B;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        /* Container da folha A4 em tela */
+        .a4-page {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 10mm 12mm 8mm 12mm;
+            margin: 20px auto;
+            background: #ffffff;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        input, select, textarea {
+            transition: all 0.15s ease-in-out;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 168, 143, 0.2);
+        }
+
+        /* Regras de Impressão A4 Exata */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
+            html, body {
+                background: #ffffff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 210mm;
+                height: 297mm;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .a4-page {
+                width: 210mm !important;
+                height: 297mm !important;
+                max-height: 297mm !important;
+                margin: 0 !important;
+                padding: 8mm 10mm 6mm 10mm !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                border: none !important;
+                page-break-after: avoid;
+                page-break-inside: avoid;
+            }
+            input, select, textarea {
+                border-color: #CBD5E1 !important;
+                background-color: transparent !important;
+                appearance: none !important;
+                -webkit-appearance: none !important;
+                resize: none !important;
+                box-shadow: none !important;
+                padding-top: 2px !important;
+                padding-bottom: 2px !important;
+            }
+            input::placeholder, textarea::placeholder {
+                color: transparent !important;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F1F5F9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94A3B8;
+            border-radius: 4px;
+        }
+        @media print {
+            .a4-page { height:auto !important; min-height:297mm !important; max-height:none !important; display:block !important; page-break-inside:auto !important; }
+            #orcamentoForm { height:auto !important; display:block !important; }
+            .item-row { break-inside:avoid; page-break-inside:avoid; }
+            .no-print { display:none !important; }
+        }
+    </style>
+</head>
+<body class="py-4 min-h-screen flex flex-col justify-between">
+
+    <!-- Barra de Ferramentas no Topo -->
+    <div class="no-print fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm py-2.5 px-6">
+        <div class="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-santory-teal animate-pulse"></span>
+                <span class="font-bold text-santory-blue text-sm uppercase tracking-wide">SantoryTec Orçamento & Cortesias</span>
+                <span class="text-[10px] bg-santory-lightteal text-santory-blue px-2 py-0.5 rounded font-mono font-bold">A4 Pronto</span>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="saveQuote()" class="px-3.5 py-1.5 text-xs font-semibold text-santory-blue bg-santory-lightteal border border-santory-teal/30 rounded-lg">Salvar orçamento</button>
+                <button type="button" onclick="sendWhatsApp()" class="px-3.5 py-1.5 text-xs font-semibold text-white bg-green-600 rounded-lg">Enviar no WhatsApp</button>
+                <button type="button" onclick="resetForm()" class="px-3.5 py-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition-all flex items-center gap-1.5 shadow-xs">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    Limpar
+                </button>
+
+                <button type="button" onclick="prepareAndPrint()" class="px-4 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-santory-blue to-santory-teal hover:from-santory-darkblue hover:to-santory-blue rounded-lg shadow-sm hover:shadow-md transition-all flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                    Imprimir / Gerar PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="no-print h-10"></div>
+
+    <!-- FOLHA A4 -->
+    <main class="a4-page" id="form-container">
+        <form id="orcamentoForm" class="h-full flex flex-col justify-between space-y-2">
+
+            <div>
+                <!-- CABEÇALHO SANTORYTEC -->
+                <header class="flex items-center justify-between border-b-2 border-santory-blue pb-2 mb-2">
+                    <div class="flex items-center gap-3"><img src="santory-logo.png" alt="Santory Tec" style="width:145px;height:70px;object-fit:contain"></div><div class="text-right">
+                        <span class="inline-block bg-santory-lightteal text-santory-blue border border-santory-teal/30 text-[10px] font-extrabold tracking-widest uppercase px-3 py-0.5 rounded-full mb-0.5">
+                            Proposta Comercial
+                        </span>
+                        <h1 class="text-xs font-bold text-slate-700 tracking-wide uppercase">Orçamento de Serviços & Cortesias</h1>
+                    </div>
+                </header>
+
+                <div class="space-y-2.5">
+
+                    <!-- 1. IDENTIFICAÇÃO DO CLIENTE E DO COMPUTADOR -->
+                    <section class="border border-slate-200 rounded p-2 bg-white">
+                        <div class="flex items-center gap-1.5 mb-1.5 pb-1 border-b border-slate-100">
+                            <span class="w-1.5 h-1.5 rounded-full bg-santory-teal"></span>
+                            <h2 class="text-[10px] font-bold uppercase tracking-wider text-santory-blue">1. Identificação do Cliente e do Equipamento</h2>
+                        </div>
+                        <div class="no-print mb-1.5">
+                            <label class="block text-[8.5px] font-bold text-slate-500 uppercase">Puxar cliente cadastrado</label>
+                            <select id="clienteExistente" class="w-full px-2 py-1 border border-slate-300 rounded text-[10px] text-slate-800 bg-white"><option value="">Escolher cliente (opcional)</option></select>
+                        </div>
+                        <div class="grid grid-cols-12 gap-2 text-[10px]">
+                            <div class="col-span-5">
+                                <label class="block text-[8.5px] font-bold text-slate-500 uppercase">Nome do Cliente</label>
+                                <input type="text" name="cliente_nome" class="w-full px-2 py-1 border border-slate-300 rounded font-medium text-slate-800" placeholder="Nome completo do cliente">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-[8.5px] font-bold text-slate-500 uppercase">ID do Usuário</label>
+                                <input type="text" name="cliente_id" readonly class="w-full px-2 py-1 border border-slate-300 rounded font-bold text-santory-blue bg-slate-50" placeholder="Gerado ao salvar">
+                            </div>
+                            <div class="col-span-3">
+                                <label class="block text-[8.5px] font-bold text-slate-500 uppercase">Telefone / WhatsApp</label>
+                                <input type="text" name="cliente_fone" class="w-full px-2 py-1 border border-slate-300 rounded font-medium text-slate-800" placeholder="(00) 00000-0000">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-[8.5px] font-bold text-slate-500 uppercase">Data Emissão</label>
+                                <input type="date" name="data_emissao" class="w-full px-1.5 py-1 border border-slate-300 rounded font-medium text-slate-800">
+                            </div>
+
+                            <div class="col-span-8">
+                                <label class="block text-[8.5px] font-bold text-slate-500 uppercase">Computador / Modelo / Marca</label>
+                                <input type="text" name="eq_modelo" class="w-full px-2 py-1 border border-slate-300 rounded font-medium text-slate-800" placeholder="Ex: Notebook Dell Inspiron 15 / PC Gamer Ryzen 5">
+                            </div>
+                            <div class="col-span-4">
+                                <label class="block text-[8.5px] font-bold text-slate-500 uppercase">Número de Série / Tag (SN)</label>
+                                <input type="text" name="eq_serial" class="w-full px-2 py-1 border border-slate-300 rounded font-medium text-slate-800" placeholder="Ex: SN-8X92K13">
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 2. TABELA DE DETALHAMENTO DO ORÇAMENTO -->
+                    <section class="border border-slate-200 rounded p-2 bg-white">
+                        <div class="flex items-center justify-between mb-1.5 pb-1 border-b border-slate-100">
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-santory-teal"></span>
+                                <h2 class="text-[10px] font-bold uppercase tracking-wider text-santory-blue">2. Detalhamento dos Serviços & Peças Solicitadas</h2>
+                            </div>
+                            <span class="text-[8.5px] text-slate-400 italic">Valores calculados automaticamente</span>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-[10px]" id="tabelaOrcamento">
+                                <thead>
+                                    <tr class="bg-slate-100 text-slate-600 font-bold border-b border-slate-200 text-[9px] uppercase">
+                                        <th class="py-1 px-2 w-[55%]">Descrição do Serviço / Peça</th>
+                                        <th class="py-1 px-1 text-center w-[12%]">Qtd</th>
+                                        <th class="py-1 px-2 text-right w-[16%]">Vlr. Unit. (R$)</th>
+                                        <th class="py-1 px-2 text-right w-[17%]">Total (R$)</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    <!-- 6 Linhas de itens preenchíveis -->
+                                    <tr class="item-row">
+                                        <td class="py-0.5 px-1"><input type="text" name="desc_1" class="w-full px-1.5 py-0.5 border border-slate-200 rounded" placeholder="Ex: SSD NVMe 512GB Kingston"></td>
+                                        <td class="py-0.5 px-1"><input type="number" name="qtd_1" min="0" step="1" oninput="calcularTotalRow(this)" class="w-full px-1 py-0.5 text-center border border-slate-200 rounded" placeholder="1"></td>
+                                        <td class="py-0.5 px-1"><input type="number" name="unit_1" min="0" step="0.01" oninput="calcularTotalRow(this)" class="w-full px-1 py-0.5 text-right border border-slate-200 rounded" placeholder="0,00"></td>
+                                        <td class="py-0.5 px-1"><input type="text" name="total_1" readonly class="w-full px-1.5 py-0.5 text-right bg-slate-50 font-semibold border border-slate-200 rounded text-slate-700" placeholder="R$ 0,00"></td>
+                                    </tr>
+                                    <tr class="item-row">
+                                        <td class="py-0.5 px-1"><input type="text" name="desc_2" class="w-full px-1.5 py-0.5 border border-slate-200 rounded" placeholder="Ex: Formatação + Reinstalação Windows 11"></td>
+                                        <td class="py-0.5 px-1"><input type="number" name="qtd_2" min="0" step="1" oninput="calcularTotalRow(this)" class="w-full px-1 py-0.5 text-center border border-slate-200 rounded" placeholder="1"></td>
+                                        <td class="py-0.5 px-1"><input type="number" name="unit_2" min="0" step="0.01" oninput="calcularTotalRow(this)" class="w-full px-1 py-0.5 text-right border border-slate-200 rounded" placeholder="0,00"></td>
+                                        <td class="py-0.5 px-1"><input type="text" name="total_2" readonly class="w-full px-1.5 py-0.5 text-right bg-slate-50 font-semibold border border-slate-200 rounded text-slate-700" placeholder="R$ 0,00"></td>
+                                    </tr>
+                                    <tr class="item-row">
+                                        <td class="py-0.5 px-1"><input type="text" name="desc_3" class="w-full px-1.5 py-0.5 border border-slate-200 rounded" placeholder="Ex: Instalação Pacote Office / Softwares"></td>
+                                        <td class="py-0.5 px-1"><input type="number" name="qtd_3" min="0" step="1" oninput="calcularTotalRow(this)" class="w-full px-1 py-0.5 text-center border border-slate-200 rounded" placeholder="1"></td>
+                                        <td class="py-0.5 px-1"><input type="number" name="unit_3" min="0" step="0.01" oninput="calcularTotalRow(this)" class="w-full px-1 py-0.5 text-right border border-slate-200 rounded" placeholder="0,00"></td>
+                                        <td class="py-0.5 px-1"><input type="text" name="total_3" readonly class="w-full px-1.5 py-0.5 text-right bg-slate-50 font-semibold border border-slate-200 rounded text-slate-700" placeholder="R$ 0,00"></td>
+                                    </tr>
+                                    <tr class="item-row">
+                                        <td class="py-0.5 px-1"><input type="text" name="desc_4" class="w-full px-1.5 py-0.5 border border-slate-200 rounded" placeholder="Serviço / Peça adicional..."></td>
+                                        <td class="py-0.5 px-1"><input type="number" name="qtd_4" min="0" step="1" oninput="calcularTotalRow(this)" class="w-full px-1 py-0.5 text-center border border-slate-200 rounded" placeholder="0"></td>
+                                        <td class="py-0.5 px-1"><input type="number" name="unit_4" min="0" step="0.01" oninput="calcularTotalRow(this)" class="w-full px-1 py-0.5 text-right border border-slate-200 rounded" placeholder="0,00"></td>
+                                        <td class="py-0.5 px-1"><input type="text" name="total_4" readonly class="w-full px-1.5 py-0.5 text-right bg-slate-50 font-semibold border border-slate-200 rounded text-slate-700" placeholder="R$ 0,00"></td>
+                                    </tr>
+                                    <tr class="item-row">
+                                        <td class="py-0.5 px-1"><input type="text" name="desc_5" class="w-full px-1.5 py-0.5 border border-slate-200 rounded" placeholder="Serviço / Peça adicional..."></td>
+                                        <td class="py-0.5 px-1"><input type="number" name="qtd_5" min="0" step="1" oninput="calcularTotalRow(this)" class="w-full px-1 py-0.5 text-center border border-slate-200 rounded" placeholder="0"></td>
+                                        <td class="py-0.5 px-1"><input type="number" name="unit_5" min="0" step="0.01" oninput="calcularTotalRow(this)" class="w-full px-1 py-0.5 text-right border border-slate-200 rounded" placeholder="0,00"></td>
+                                        <td class="py-0.5 px-1"><input type="text" name="total_5" readonly class="w-full px-1.5 py-0.5 text-right bg-slate-50 font-semibold border border-slate-200 rounded text-slate-700" placeholder="R$ 0,00"></td>
+                                    </tr>
+                                </tbody>
+                    </table>
+                    <div class="no-print mt-2 flex flex-wrap items-center gap-2"><select id="catalogItemSelect" class="px-2 py-1.5 text-[10px] border border-slate-300 rounded bg-white"><option value="">Escolha do catálogo</option></select><button type="button" onclick="addCatalogItemToQuote()" class="px-3 py-1.5 text-[10px] font-bold text-white bg-santory-teal rounded">Adicionar ao orçamento</button><button type="button" onclick="addItemRow()" class="px-3 py-1.5 text-[10px] font-bold text-santory-blue bg-slate-100 border border-slate-200 rounded">+ Linha manual</button></div>
+                        </div>
+                    </section>
+
+                    <!-- 3. SEÇÃO DESTACADA DE BRINDES & CORTESIAS -->
+                    <section class="border border-santory-teal/40 rounded p-2 bg-santory-lightteal/40 shadow-xs">
+                        <div class="flex items-center justify-between mb-1.5 pb-1 border-b border-santory-teal/20">
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-santory-teal animate-pulse"></span>
+                                <h2 class="text-[10.5px] font-bold uppercase tracking-wider text-santory-teal">3. Itens e Serviços Concedidos em Cortesia (Brindes Gratuitos)</h2>
+                            </div>
+                            <span class="text-[9px] font-extrabold text-santory-teal uppercase tracking-wide">CORTESIA SANTORYTEC</span>
+                        </div>
+
+                        <div class="grid grid-cols-12 gap-2 text-[10px]">
+                            <div class="col-span-8 space-y-1">
+                                <label class="block font-bold text-slate-700 uppercase text-[8.5px]">Descrição detalhada dos Brindes / Cortesias sem Custo</label>
+                                <textarea name="brindes_detalhe" rows="2" class="w-full p-1.5 border border-slate-300 rounded text-slate-800 font-medium bg-white leading-tight" placeholder="Ex: • Limpeza Física Interna Profunda&#10;• Troca de Pasta Térmica de Prata (Alta Condutividade)&#10;• Otimização de Inicialização do Windows"></textarea>
+                            </div>
+                            <div class="col-span-4 flex flex-col justify-between">
+                                <div>
+                                    <label class="block font-bold text-slate-700 uppercase text-[8.5px]">Economia Gerada ao Cliente (R$)</label>
+                                    <input type="number" name="brindes_desconto" min="0" step="0.01" oninput="calcularResumo()" class="w-full px-2 py-1 border border-santory-teal/50 rounded font-bold text-santory-teal bg-white text-right" placeholder="0,00">
+                                </div>
+                                <div class="bg-white p-1.5 border border-santory-teal/30 rounded text-center">
+                                    <span class="block text-[8px] font-bold text-slate-500 uppercase">Status da Cortesia</span>
+                                    <span class="text-[10px] font-extrabold text-santory-teal uppercase">100% GRATUITO</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 4. RESUMO FINANCEIRO & FORMA DE PAGAMENTO -->
+                    <section class="border border-slate-200 rounded p-2 bg-white">
+                        <div class="flex items-center gap-1.5 mb-1.5 pb-1 border-b border-slate-100">
+                            <span class="w-1.5 h-1.5 rounded-full bg-santory-teal"></span>
+                            <h2 class="text-[10px] font-bold uppercase tracking-wider text-santory-blue">4. Resumo Financeiro & Condições de Pagamento</h2>
+                        </div>
+                        <div class="grid grid-cols-12 gap-3 text-[10px]">
+                            
+                            <!-- Valores -->
+                            <div class="col-span-6 space-y-1 border-r border-slate-100 pr-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-medium text-slate-600">Subtotal dos Serviços/Peças:</span>
+                                    <input type="text" name="resumo_subtotal" readonly class="w-28 text-right px-1.5 py-0.5 bg-slate-50 font-semibold border border-slate-200 rounded text-slate-800" placeholder="R$ 0,00">
+                                </div>
+                                <div class="flex items-center justify-between text-santory-teal">
+                                    <span class="font-bold">Total de Cortesias / Desconto:</span>
+                                    <input type="text" name="resumo_cortesia_display" readonly class="w-28 text-right px-1.5 py-0.5 bg-santory-lightteal/50 font-bold border border-santory-teal/30 rounded text-santory-teal" placeholder="- R$ 0,00">
+                                </div>
+                                <div class="flex items-center justify-between text-santory-blue pt-1 border-t border-slate-200">
+                                    <span class="font-extrabold uppercase text-[11px]">Valor Total a Pagar:</span>
+                                    <input type="text" name="resumo_total_final" readonly class="w-32 text-right px-2 py-1 bg-santory-blue text-white font-black text-xs rounded shadow-xs print:bg-slate-100 print:text-santory-blue print:border-santory-blue print:border-2" placeholder="R$ 0,00">
+                                </div>
+                            </div>
+
+                            <!-- Forma de Pagamento -->
+                            <div class="col-span-6 space-y-1">
+                                <label class="block text-[8.5px] font-bold text-slate-500 uppercase">Forma / Condições de Pagamento</label>
+                                <div class="grid grid-cols-3 gap-1 mb-1">
+                                    <label class="flex items-center justify-center gap-1 p-1 border border-slate-200 rounded cursor-pointer hover:bg-slate-50">
+                                        <input type="radio" name="forma_pagamento" value="PIX / Dinheiro" class="text-santory-teal">
+                                        <span class="font-bold text-[9px]">PIX</span>
+                                    </label>
+                                    <label class="flex items-center justify-center gap-1 p-1 border border-slate-200 rounded cursor-pointer hover:bg-slate-50">
+                                        <input type="radio" name="forma_pagamento" value="Cartão de Crédito" class="text-santory-teal">
+                                        <span class="font-bold text-[9px]">Cartão</span>
+                                    </label>
+                                    <label class="flex items-center justify-center gap-1 p-1 border border-slate-200 rounded cursor-pointer hover:bg-slate-50">
+                                        <input type="radio" name="forma_pagamento" value="Faturado / Outro" class="text-santory-teal">
+                                        <span class="font-bold text-[9px]">Outro</span>
+                                    </label>
+                                </div>
+                                <input type="text" name="detalhes_pagamento" class="w-full px-2 py-0.5 border border-slate-300 rounded text-slate-800" placeholder="Ex: Em até 3x sem juros no cartão ou PIX com 5% desc.">
+                            </div>
+
+                        </div>
+                    </section>
+
+                    <!-- 5. OBSERVAÇÕES & VALIDADE DO ORÇAMENTO -->
+                    <section class="border border-slate-200 rounded p-2 bg-white">
+                        <div class="flex items-center justify-between mb-1 pb-1 border-b border-slate-100">
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-santory-teal"></span>
+                                <h2 class="text-[10px] font-bold uppercase tracking-wider text-santory-blue">5. Observações & Validade da Proposta</h2>
+                            </div>
+                            <div class="flex items-center gap-1 text-[9px]">
+                                <span class="font-bold text-slate-500">Validade do Orçamento:</span>
+                                <input type="text" name="validade_dias" class="w-20 px-1.5 py-0.5 border border-slate-300 rounded font-semibold text-center" placeholder="7 Dias">
+                            </div>
+                        </div>
+                        <textarea name="obs_gerais" rows="2" class="w-full p-1.5 text-[9.5px] border border-slate-300 rounded text-slate-800 leading-tight" placeholder="Termos de garantia (ex: 90 dias para peças e serviços), condições para início do trabalho ou observações técnicas adicionais..."></textarea>
+                    </section>
+
+                </div>
+            </div>
+
+            <!-- 6. ASSINATURAS E RODAPÉ -->
+            <div class="pt-2 border-t border-slate-200">
+                <div class="grid grid-cols-2 gap-8 mb-2">
+                    <div class="text-center">
+                        <div class="border-b border-slate-400 mb-1 pb-3">
+                            <input type="text" name="tecnico_nome" class="w-full text-center text-xs font-semibold text-slate-800 border-none bg-transparent p-0 focus:ring-0" placeholder="Nome do Técnico Responsável">
+                        </div>
+                        <p class="text-[8.5px] font-bold text-santory-blue uppercase tracking-wider">SantoryTec Suporte Técnico</p>
+                        <p class="text-[7.5px] text-slate-400">Responsável pela Emissão do Orçamento</p>
+                    </div>
+
+                    <div class="text-center">
+                        <div class="border-b border-slate-400 mb-1 pb-3">
+                            <span class="inline-block w-full text-center text-xs font-semibold text-slate-800">&nbsp;</span>
+                        </div>
+                        <p class="text-[8.5px] font-bold text-santory-blue uppercase tracking-wider">Aprovação do Cliente</p>
+                        <p class="text-[7.5px] text-slate-400">Autorizo a execução dos serviços e peças cotados acima</p>
+                    </div>
+                </div>
+
+                <footer class="flex items-center justify-between text-[7.5px] text-slate-400 font-medium pt-1 border-t border-slate-100">
+                    <span>SantoryTec - Tecnologia, Manutenção & Consultoria de TI</span>
+                    <span>Documento Comercial - Impressão 1 Folha A4</span>
+                </footer>
+            </div>
+
+        </form>
+    </main>
+
+    <!-- SCRIPT DE CÁLCULO E ARMAZENAMENTO -->
+    <script>
+        const STORAGE_KEY = 'santorytec_orcamento_brindes_data';
+        const DB_KEY = 'santorytec.browser.v1';
+        const form = document.getElementById('orcamentoForm');
+        let editingQuoteId = new URLSearchParams(location.search).get('quoteId'); let linkedServiceOrderId = '';
+        const makeUserId = () => {
+            const db = JSON.parse(localStorage.getItem(DB_KEY) || '{}');
+            db.clients ||= []; db.usedUserIds ||= [];
+            const used = new Set([...db.usedUserIds.map(String), ...db.clients.map(c => String(c.publicId || ''))]);
+            let id; do { id = String(Math.floor(10000000 + Math.random() * 90000000)); } while (used.has(id));
+            db.usedUserIds = [...new Set([...db.usedUserIds.map(String), id])];
+            localStorage.setItem(DB_KEY, JSON.stringify(db)); return id;
+        };
+        function refreshClientLookup(selectedId='') {
+            let db={}; try{db=JSON.parse(localStorage.getItem(DB_KEY)||'{}')}catch{}
+            const select=document.getElementById('clienteExistente');
+            if(!select)return;
+            const current=selectedId||db.clients?.find(c=>c.publicId===form.elements.cliente_id.value)?.id||'';
+            select.innerHTML='<option value="">Escolher cliente (opcional)</option>'+(db.clients||[]).map(c=>`<option value="${String(c.id).replace(/[&<>"']/g,'')}">${String(c.name||'Cliente').replace(/[&<>"']/g,'')} · ${String(c.publicId||'')}</option>`).join('');
+            select.value=current;
+            select.onchange=()=>{const c=db.clients?.find(item=>item.id===select.value);if(!c)return;form.elements.cliente_nome.value=c.name||'';form.elements.cliente_id.value=c.publicId||'';form.elements.cliente_fone.value=c.phone||'';saveData()};
+        }
+        function refreshCatalogLookup(){let db={};try{db=JSON.parse(localStorage.getItem(DB_KEY)||'{}')}catch{}const select=document.getElementById('catalogItemSelect');if(!select)return;select.innerHTML='<option value="">Escolha do catálogo</option>'+(db.catalog||[]).map(item=>{const option=document.createElement('option');option.value=item.id;option.textContent=`${item.name} · ${Number(item.price||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}`;return option.outerHTML}).join('')}
+        function addCatalogItemToQuote(){const select=document.getElementById('catalogItemSelect');let db={};try{db=JSON.parse(localStorage.getItem(DB_KEY)||'{}')}catch{}const item=(db.catalog||[]).find(x=>x.id===select?.value);if(!item){alert('Escolha um item cadastrado no catálogo.');return}let row=[...form.querySelectorAll('.item-row')].find(r=>!r.querySelector('input[name^="desc_"]').value.trim());if(!row){addItemRow();row=form.querySelector('.item-row:last-child')}row.querySelector('input[name^="desc_"]').value=item.name;row.querySelector('input[name^="qtd_"]').value='1';row.querySelector('input[name^="unit_"]').value=Number(item.price)||0;calcularTotalRow(row.querySelector('input[name^="unit_"]'));saveData();select.value=''}
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSavedData();
+            refreshClientLookup();
+            refreshCatalogLookup();
+            const actionHead = document.createElement('th'); actionHead.className = 'no-print'; actionHead.textContent = 'Ação'; document.querySelector('#tabelaOrcamento thead tr').appendChild(actionHead);
+            document.querySelectorAll('.item-row').forEach(row => addRemoveButton(row));
+
+            const dateInput = form.querySelector('input[name="data_emissao"]');
+            if (!dateInput.value) {
+                const today = new Date().toISOString().split('T')[0];
+                dateInput.value = today;
+            }
+
+            // Garante recálculo inicial
+            calcularResumo();
+
+            form.addEventListener('input', () => {
+                calcularResumo();
+                saveData();
+            });
+            form.addEventListener('change', () => {
+                calcularResumo();
+                saveData();
+            });
+        });
+
+        // Calcula linha individual da tabela
+        function calcularTotalRow(element) {
+            const row = element.closest('.item-row');
+            if (!row) return;
+
+            const qtdInput = row.querySelector('input[name^="qtd_"]');
+            const unitInput = row.querySelector('input[name^="unit_"]');
+            const totalInput = row.querySelector('input[name^="total_"]');
+
+            const qtd = parseFloat(qtdInput.value) || 0;
+            const unit = parseFloat(unitInput.value) || 0;
+            const total = qtd * unit;
+
+            totalInput.value = `R$ ${total.toFixed(2).replace('.', ',')}`;
+            totalInput.dataset.numValue = total;
+
+            calcularResumo();
+        }
+
+        // Calcula o Subtotal e Total Final
+        function calcularResumo() {
+            let subtotal = 0;
+            form.querySelectorAll('.item-row input[name^="total_"]').forEach(totalInput => {
+                subtotal += parseFloat(totalInput.dataset.numValue) || 0;
+            });
+
+            const descontoInput = form.querySelector('input[name="brindes_desconto"]');
+            const desconto = parseFloat(descontoInput ? descontoInput.value : 0) || 0;
+            const totalFinal = Math.max(0, subtotal - desconto);
+
+            const subtotalInput = form.querySelector('input[name="resumo_subtotal"]');
+            const cortesiaDisplay = form.querySelector('input[name="resumo_cortesia_display"]');
+            const totalFinalInput = form.querySelector('input[name="resumo_total_final"]');
+
+            if (subtotalInput) subtotalInput.value = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+            if (cortesiaDisplay) cortesiaDisplay.value = `- R$ ${desconto.toFixed(2).replace('.', ',')}`;
+            if (totalFinalInput) totalFinalInput.value = `R$ ${totalFinal.toFixed(2).replace('.', ',')}`;
+        }
+
+        function saveData() {
+            const formData = new FormData(form);
+            const data = {};
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            data.itemCount = form.querySelectorAll('.item-row').length;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        function addRemoveButton(row) {
+            if (row.querySelector('.remove-item')) return;
+            const cell = document.createElement('td');
+            cell.className = 'no-print py-0.5 px-1 text-center';
+            cell.innerHTML = '<button type="button" class="remove-item text-rose-600 font-bold px-2" title="Remover produto/serviço">×</button>';
+            row.appendChild(cell);
+            cell.querySelector('button').addEventListener('click', () => {
+                if (form.querySelectorAll('.item-row').length <= 1) {
+                    row.querySelectorAll('input').forEach(input => { input.value = ''; delete input.dataset.numValue; });
+                } else row.remove();
+                calcularResumo(); saveData();
+            });
+        }
+
+        function addItemRow() {
+            const tbody = document.querySelector('#tabelaOrcamento tbody');
+            const next = Math.max(0, ...[...form.querySelectorAll('input[name^="desc_"]')].map(input => Number(input.name.split('_')[1]) || 0)) + 1;
+            const row = document.createElement('tr');
+            row.className = 'item-row';
+            row.innerHTML = `<td class="py-0.5 px-1"><input type="text" name="desc_${next}" class="w-full px-1.5 py-0.5 border border-slate-200 rounded" placeholder="Produto ou serviço"></td><td class="py-0.5 px-1"><input type="number" name="qtd_${next}" min="0" step="1" oninput="calcularTotalRow(this)" class="w-full px-1 py-0.5 text-center border border-slate-200 rounded" placeholder="1"></td><td class="py-0.5 px-1"><input type="number" name="unit_${next}" min="0" step="0.01" oninput="calcularTotalRow(this)" class="w-full px-1 py-0.5 text-right border border-slate-200 rounded" placeholder="0,00"></td><td class="py-0.5 px-1"><input type="text" name="total_${next}" readonly class="w-full px-1.5 py-0.5 text-right bg-slate-50 font-semibold border border-slate-200 rounded text-slate-700" placeholder="R$ 0,00"></td>`;
+            tbody.appendChild(row); addRemoveButton(row); saveData();
+        }
+
+        function loadSavedData() {
+            let data = null;
+            if (editingQuoteId) {
+                try { const db = JSON.parse(localStorage.getItem(DB_KEY) || '{}'); data = db.quotes?.find(q => q.id === editingQuoteId)?.formData || null; } catch {}
+            }
+            if (!data && !new URLSearchParams(location.search).has('new')) { try { data = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch {} }
+            if (!data) return;
+
+            try {
+                const wanted = Number(data.itemCount) || 5;
+                while (form.querySelectorAll('.item-row').length < wanted) addItemRow();
+                Object.keys(data).forEach(key => {
+                    if (key === 'itemCount') return;
+                    const elements = form.querySelectorAll(`[name="${key}"]`);
+                    elements.forEach(el => {
+                        if (el.type === 'radio') {
+                            if (el.value === data[key]) el.checked = true;
+                        } else {
+                            el.value = data[key];
+                        }
+                    });
+                });
+
+                // Recalcula totais da tabela após recarregar
+                form.querySelectorAll('input[name^="qtd_"]').forEach(calcularTotalRow);
+            } catch (e) {
+                console.error("Erro ao carregar dados salvos", e);
+            }
+        }
+
+        function resetForm() {
+            if (confirm("Tem certeza que deseja limpar todo o orçamento?")) {
+                form.reset();
+                localStorage.removeItem(STORAGE_KEY);
+                const dateInput = form.querySelector('input[name="data_emissao"]');
+                const today = new Date().toISOString().split('T')[0];
+                dateInput.value = today;
+                calcularResumo();
+                editingQuoteId = null;
+            }
+        }
+
+        function collectQuote() {
+            calcularResumo();
+            const formData = Object.fromEntries(new FormData(form).entries());
+            formData.itemCount = form.querySelectorAll('.item-row').length;
+            const clientName = formData.cliente_nome?.trim();
+            if (!clientName) { alert('Preencha o nome do cliente antes de salvar.'); return null; }
+            const db = JSON.parse(localStorage.getItem(DB_KEY) || '{"clients":[],"quotes":[],"parts":[]}');
+            db.clients ||= []; db.quotes ||= []; db.parts ||= [];
+            const phoneDigits=String(formData.cliente_fone||'').replace(/\D/g,'');
+            let client = db.clients.find(c => c.publicId && c.publicId === formData.cliente_id) || db.clients.find(c => c.name?.trim().toLowerCase() === clientName.toLowerCase()) || (phoneDigits && db.clients.find(c => String(c.phone||'').replace(/\D/g,'')===phoneDigits));
+            if (!client) { const requestedId=String(formData.cliente_id||'');const collision=db.clients.some(c=>c.publicId===requestedId);const publicId=/^\d{8}$/.test(requestedId)&&!collision?requestedId:makeUserId();client = {id: crypto.randomUUID?.() || String(Date.now()), publicId, name: clientName, phone: formData.cliente_fone || '', email: '', notes: '', created: new Date().toISOString()}; db.clients.push(client); }
+            client.publicId ||= makeUserId(); db.usedUserIds ||= []; db.usedUserIds=[...new Set([...db.usedUserIds.map(String),String(client.publicId)])]; formData.cliente_id = client.publicId; form.elements.cliente_id.value = client.publicId;
+            const value = [...form.querySelectorAll('input[name^="total_"]')].reduce((sum, el) => sum + (Number(el.dataset.numValue) || 0), 0) - (Number(formData.brindes_desconto) || 0);
+            const details = [...form.querySelectorAll('.item-row')].map(row => ({description: row.querySelector('input[name^="desc_"]').value, qty: row.querySelector('input[name^="qtd_"]').value, unit: row.querySelector('input[name^="unit_"]').value})).filter(item => item.description);
+            const previousQuote = editingQuoteId ? db.quotes.find(q => q.id === editingQuoteId) : null;
+            const quote = {id: editingQuoteId || (crypto.randomUUID?.() || String(Date.now())), number: previousQuote?.number || `ORC-${String(Date.now()).slice(-6)}`, client: client.id, clientName, description: formData.eq_modelo || 'Orçamento de serviços e peças', value: Math.max(0, value), details: JSON.stringify({formData, details}), formData, created: previousQuote?.created || new Date().toISOString(), validity: Number((formData.validade_dias || '7').match(/\d+/)?.[0]) || 7, status: previousQuote?.status || 'aberto', serviceOrderId: previousQuote?.serviceOrderId || linkedServiceOrderId || '', closedAt: previousQuote?.closedAt || '', receivedValue: previousQuote?.receivedValue || 0, paymentMethod: previousQuote?.paymentMethod || ''};
+            const at = db.quotes.findIndex(q => q.id === quote.id);
+            if (at >= 0) db.quotes[at] = quote; else db.quotes.push(quote);
+            localStorage.setItem(DB_KEY, JSON.stringify(db)); editingQuoteId = quote.id;refreshClientLookup(client.id);
+            try { window.parent.postMessage({type:'santory-quote-saved', quote}, '*'); } catch {}
+            return quote;
+        }
+
+        function saveQuote() {
+            const quote = collectQuote();
+            if (quote) { document.title = `Orcamento - ${quote.clientName.replace(/[\\/:*?"<>|]/g, '-')}`; alert(`Orçamento ${quote.number} salvo para ${quote.clientName}.`); }
+        }
+
+        function sendWhatsApp() {
+            const quote = collectQuote();
+            if (!quote) return;
+            const digits = (form.querySelector('[name="cliente_fone"]').value || '').replace(/\D/g, '');
+            const phone = digits ? (digits.startsWith('55') ? digits : `55${digits}`) : '';
+            const items = [...form.querySelectorAll('.item-row')].map(row => {
+                const name = row.querySelector('input[name^="desc_"]').value.trim();
+                if (!name) return '';
+                const qty = row.querySelector('input[name^="qtd_"]').value || '1';
+                const total = row.querySelector('input[name^="total_"]').value || 'R$ 0,00';
+                return `• ${qty}× ${name}: ${total}`;
+            }).filter(Boolean).join('\n');
+            const message = `Olá, ${quote.clientName}! Segue o orçamento ${quote.number} da Santory Tec.\nID do usuário: ${form.elements.cliente_id.value}\n\n${items}\n\nTotal: ${form.querySelector('[name="resumo_total_final"]').value}\nValidade: ${form.querySelector('[name="validade_dias"]').value || '7 dias'}\n\nO PDF pode ser anexado após gerar em Imprimir / Gerar PDF.`;
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
+        }
+
+        window.addEventListener('message', event => {
+            if (event.data?.type === 'quote-items' && Array.isArray(event.data.service?.items)) {
+                const incoming = event.data.service.items; linkedServiceOrderId = event.data.service.serviceOrderId || linkedServiceOrderId;
+                incoming.forEach((item, index) => {
+                    let row = form.querySelectorAll('.item-row')[index];
+                    if (!row) { addItemRow(); row = form.querySelector('.item-row:last-child'); }
+                    row.querySelector('input[name^="desc_"]').value = item.title || 'Componente';
+                    row.querySelector('input[name^="qtd_"]').value = Number(item.qty) || 1;
+                    row.querySelector('input[name^="unit_"]').value = (Number(item.price) || 0).toFixed(2);
+                    calcularTotalRow(row.querySelector('input[name^="qtd_"]'));
+                });
+                form.querySelector('[name="eq_modelo"]').value = 'Computador personalizado';
+                if(event.data.service.client){const client=event.data.service.client;form.elements.cliente_nome.value=client.name||'';form.elements.cliente_id.value=client.publicId||'';form.elements.cliente_fone.value=client.phone||'';refreshClientLookup(client.id)}
+                saveData(); return;
+            }
+        });
+
+        function prepareAndPrint() {
+            const client = form.querySelector('[name="cliente_nome"]')?.value.trim() || 'Cliente';
+            const userCode = form.elements.cliente_id.value || makeUserId(); form.elements.cliente_id.value = userCode;
+            const previousTitle = document.title;
+            document.title = `Orcamento - ${userCode}`;
+            // Garante que os totais estejam 100% atualizados antes de tratar os campos
+            calcularResumo();
+
+            const originalValues = new Map();
+            const textInputs = form.querySelectorAll('input[type="text"], input[type="email"], input[type="date"], input[type="number"], textarea');
+
+            textInputs.forEach(input => {
+                originalValues.set(input, input.value);
+                
+                // Ignora campos calculados de resumo financeiro e totais das linhas para não colocar '-'
+                const isCalculatedField = input.name.startsWith('resumo_') || input.name.startsWith('total_');
+                
+                if (!isCalculatedField && !input.value.trim()) {
+                    input.value = '-';
+                }
+            });
+
+            const selects = form.querySelectorAll('select');
+            selects.forEach(select => {
+                originalValues.set(select, select.value);
+                if (!select.value) {
+                    const tempOpt = document.createElement('option');
+                    tempOpt.value = '-';
+                    tempOpt.text = '-';
+                    tempOpt.dataset.temp = 'true';
+                    select.appendChild(tempOpt);
+                    select.value = '-';
+                }
+            });
+
+            window.print();
+
+            setTimeout(() => {
+                textInputs.forEach(input => {
+                    if (originalValues.has(input)) {
+                        input.value = originalValues.get(input);
+                    }
+                });
+
+                selects.forEach(select => {
+                    const tempOpt = select.querySelector('option[data-temp="true"]');
+                    if (tempOpt) {
+                        tempOpt.remove();
+                    }
+                    if (originalValues.has(select)) {
+                        select.value = originalValues.get(select);
+                    }
+                });
+                calcularResumo();
+                document.title = previousTitle;
+            }, 500);
+        }
+    </script>
+</body>
+</html>
+
